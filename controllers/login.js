@@ -29,10 +29,11 @@ loginRouter.post('/', async (request, response) => {
     process.env.SECRET,
     { expiresIn: 60*60*24*30 }
   )
+  console.log('user', user)
 
   response
     .status(200)
-    .send({ token, email: user.email, name: user.name })
+    .send({ token, user })
 })
 
 module.exports = loginRouter
