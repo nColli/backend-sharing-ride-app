@@ -1,80 +1,57 @@
+/* eslint-disable @stylistic/js/linebreak-style */
+const StringRequired  = require('../structure/requirements')
+const { RegularPlace, Vehicle } = require('../structure/objects')
+
 const mongoose = require('mongoose')
 
-mongoose.set('strictQuery', false)
-
-const url = process.env.MONGODB_URI
-console.log('connecting to', url);
-mongoose.connect(url)
-    .then(() => {
-        console.log('connected to MongoDB');
-    })
-    .catch(error => {
-        console.log('error connecting to MongoDB', error.message);
-    })
-/*
-const Place = {
-    street: String,
-    number: String,
-    city: String,
-    province: String
-}
-
-const RegularPlace = {
-    name: String,
-    place: Place
-}
-
-//si es un schema mongo dif, no deberia almaacenarlo aca, los otros si xq se usan solo aca y en viaje, se pueden exportar en su archivo e imporealos como import { Place } from './structures/
-//lo mismo con user se puede sacar el obj y mandarlo a su archivo
-const Vehicle = {
-    plate: String,
-    brand: String,
-    model: String,
-    year: Number,
-    insuranceImage: String
-}*/
-
-const stringRequired = {
-    type: String,
-    required: true
-}
 
 const userSchema = new mongoose.Schema({
   email: {
-    type: String,
-    required: true,
+    ...StringRequired,
     unique: true
   },
-  passwordHash: stringRequired,
-  name: stringRequired,
-  surname: String,
-  /*documentNumber: stringRequired,
-  dateBirth: Date,
-  documentFrontImage: String, //almacena codificado en Base64
-  docuemntBackImage: String,
-  profilePicture: String,
-  //home: RegularPlace, 
+  passwordHash: StringRequired,
+  //datos usuario
+  name: StringRequired,
+  surname: StringRequired,
+  //adentro va almacenado la casa cuando se registra
   regularPlaces: [
-    RegularPlace //Adentro almaceno la casa con nombre casa, creo el primer lugar regular haitual
+    {
+      type: RegularPlace,
+      ref: 'RegularPlace'
+    }
   ],
   vehicles: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Vehicle,
       ref: 'Vehicle'
     }
   ],
-  travels: [
+  //arrays de viajes y reservas
+  oldTrips: [
     {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Travel'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Trip'
     }
   ],
-  reservations: [
+  pendingTrips: [
     {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Reservation'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Trip'
     }
-  ]*/
+  ],
+  oldReserves: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Reserve'
+    }
+  ],
+  pendingReserves: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Reserve'
+    }
+  ],
 })
 
 userSchema.set('toJSON', {
