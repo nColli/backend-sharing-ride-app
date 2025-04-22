@@ -30,6 +30,8 @@ usersRouter.post('/', async (request, response) => {
 
   const savedUser = await user.save()
 
+  //dsp de refact - delvolver tambien token para iniciar sesión directamente
+
   response.status(201).json(savedUser)
 })
 

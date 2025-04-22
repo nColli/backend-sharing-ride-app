@@ -1,6 +1,4 @@
 /* eslint-disable @stylistic/js/linebreak-style */
-const StringRequired  = require('../structure/requirements')
-
 const mongoose = require('mongoose')
 
 const Place = new mongoose.Schema({
@@ -23,17 +21,25 @@ const Vehicle = new mongoose.Schema({
   insuranceImage: String //store in Base64
 })
 
-
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
     unique: true
   },
-  passwordHash: StringRequired,
+  passwordHash: {
+    type: String,
+    required: true
+  },
   //datos usuario
-  name: StringRequired,
-  surname: StringRequired,
+  name: {
+    type: String,
+    required: true
+  },
+  surname: {
+    type: String,
+    required: true
+  },
   //adentro va almacenado la casa cuando se registra
   regularPlaces: [RegularPlace],
   vehicles: [Vehicle],
