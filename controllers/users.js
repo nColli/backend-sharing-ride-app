@@ -16,7 +16,7 @@ usersRouter.get('/', async (request, response) => {
 
 //signup - registrar usuario con datos basicos
 usersRouter.post('/', async (request, response) => {
-  const { email, password, name, surname } = request.body
+  const { email, password, name, surname, isAdministrator } = request.body
 
   const saltRounds = 10
   const passwordHash = await bcrypt.hash(password, saltRounds)
@@ -25,7 +25,8 @@ usersRouter.post('/', async (request, response) => {
     email,
     passwordHash,
     name,
-    surname
+    surname,
+    isAdministrator
   })
 
   const savedUser = await user.save()

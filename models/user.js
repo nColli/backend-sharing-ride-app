@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  isAdministrator: {
+    type: Boolean,
+    required: true
+  },
   //adentro va almacenado la casa cuando se registra
   regularPlaces: [RegularPlace],
   vehicles: [Vehicle],
