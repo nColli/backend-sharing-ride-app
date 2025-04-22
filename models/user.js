@@ -1,13 +1,33 @@
 /* eslint-disable @stylistic/js/linebreak-style */
 const StringRequired  = require('../structure/requirements')
-const { RegularPlace, Vehicle } = require('../structure/objects')
 
 const mongoose = require('mongoose')
+
+const Place = new mongoose.Schema({
+  street: String,
+  number: String,
+  city: String,
+  province: String
+})
+
+const RegularPlace = new mongoose.Schema({
+  name: String,
+  place: Place
+})
+
+const Vehicle = new mongoose.Schema({
+  plate: String,
+  brand: String,
+  model: String,
+  year: Number,
+  insuranceImage: String //store in Base64
+})
 
 
 const userSchema = new mongoose.Schema({
   email: {
-    ...StringRequired,
+    type: String,
+    required: true,
     unique: true
   },
   passwordHash: StringRequired,
@@ -15,18 +35,8 @@ const userSchema = new mongoose.Schema({
   name: StringRequired,
   surname: StringRequired,
   //adentro va almacenado la casa cuando se registra
-  regularPlaces: [
-    {
-      type: RegularPlace,
-      ref: 'RegularPlace'
-    }
-  ],
-  vehicles: [
-    {
-      type: Vehicle,
-      ref: 'Vehicle'
-    }
-  ],
+  regularPlaces: [RegularPlace],
+  vehicles: [Vehicle],
   //arrays de viajes y reservas
   oldTrips: [
     {
@@ -51,7 +61,7 @@ const userSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Reserve'
     }
-  ],
+  ]
 })
 
 userSchema.set('toJSON', {
