@@ -44,6 +44,12 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     required: true
   },
+  tokenResetPassword: {
+    type: String
+  },
+  tokenExpirationDate: {
+    type: String
+  },
   //adentro va almacenado la casa cuando se registra
   regularPlaces: [RegularPlace],
   vehicles: [Vehicle],
@@ -81,6 +87,8 @@ userSchema.set('toJSON', {
     delete returnedObject.__v
     // el passwordHash no debe mostrarse
     delete returnedObject.passwordHash
+    delete returnedObject.tokenResetPassword
+    delete returnedObject.tokenExpirationDate
   }
 })
 

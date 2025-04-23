@@ -9,6 +9,7 @@ const userRouter = require('./controllers/user')
 const middleware = require('./utils/middleware')
 const logger = require('./utils/logger')
 const mongoose = require('mongoose')
+const resetpasswordRouter = require('./controllers/resetpassword')
 
 mongoose.set('strictQuery', false)
 
@@ -30,6 +31,7 @@ app.use(middleware.requestLogger)
 app.use(middleware.userExtractor) //permite que en request.user este el token
 
 app.use('/api/login', loginRouter)
+app.use('/api/resetpassword', resetpasswordRouter)
 //agregar a users middleware tokenValidation cuando este separado del signup -> se puede acceder sin token solo a loginRouter y SignupRouter - det si dejar users o sacarlo y dividirlo x completo
 app.use('/api/users', usersRouter) //separar signup con users para agregar o modificar cosas de un usuario o crear nuevo router user para modificar un usuario individual
 
