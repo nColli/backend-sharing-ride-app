@@ -1,6 +1,7 @@
 /* eslint-disable @stylistic/js/linebreak-style */
 const mongoose = require('mongoose')
-
+const RegularPlace = require('../models/regularPlace')
+/*
 const Place = new mongoose.Schema({
   street: String,
   number: String,
@@ -12,7 +13,7 @@ const RegularPlace = new mongoose.Schema({
   name: String,
   place: Place
 })
-
+*/
 const Vehicle = new mongoose.Schema({
   plate: String,
   brand: String,
