@@ -2,7 +2,6 @@
 const bcrypt = require('bcrypt')
 const usersRouter = require('express').Router()
 const User = require('../models/user')
-const RegularPlace = require('../models/regularPlace')
 const Place = require('../models/place')
 
 //sacar que se pueda acceder a todos los usuarios en produccion - solo para pruebas
@@ -26,19 +25,16 @@ usersRouter.post('/', async (request, response) => {
   const passwordHash = await bcrypt.hash(password, saltRounds)
 
   const placeHome = new Place({
+    name: 'Casa',
     street,
     number,
     city: locality,
     province
   })
 
-  const home = new RegularPlace({
-    place: placeHome,
-    name: 'home'
-  })
+  const savedPlaceHome = await placeHome.save()
 
-  const regularPlaces = []
-  regularPlaces.concat(home)
+  console.log('home', savedPlaceHome)
 
   const user = new User({
     email,
@@ -47,14 +43,15 @@ usersRouter.post('/', async (request, response) => {
     surname,
     isAdministrator: false,
     birthDate,
-    regularPlaces
   })
 
   const savedUser = await user.save()
+  savedUser.regularPlaces = savedUser.regularPlaces.concat(savedPlaceHome._id)
+  const lastSavedUser = await savedUser.save() //reescribir con la casa agregada
 
   //dsp de refact - delvolver tambien token para iniciar sesión directamente
 
-  response.status(201).json(savedUser)
+  response.status(201).json(lastSavedUser)
 })
 
 module.exports = usersRouter

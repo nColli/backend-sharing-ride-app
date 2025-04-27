@@ -1,26 +1,5 @@
 /* eslint-disable @stylistic/js/linebreak-style */
 const mongoose = require('mongoose')
-const RegularPlace = require('../models/regularPlace')
-/*
-const Place = new mongoose.Schema({
-  street: String,
-  number: String,
-  city: String,
-  province: String
-})
-
-const RegularPlace = new mongoose.Schema({
-  name: String,
-  place: Place
-})
-*/
-const Vehicle = new mongoose.Schema({
-  plate: String,
-  brand: String,
-  model: String,
-  year: Number,
-  insuranceImage: String //store in Base64
-})
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -52,8 +31,28 @@ const userSchema = new mongoose.Schema({
     type: String
   },
   //adentro va almacenado la casa cuando se registra
-  regularPlaces: [RegularPlace],
-  vehicles: [Vehicle],
+  regularPlaces: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Place'
+    }
+  ],
+  vehicles: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Vehicle'
+    }
+  ],
+  //fotos de dni y selfie almacenadas en base64
+  document_front: {
+    type: String
+  },
+  document_back: {
+    type: String
+  },
+  profile_photo: {
+    type: String
+  },
   //arrays de viajes y reservas
   oldTrips: [
     {

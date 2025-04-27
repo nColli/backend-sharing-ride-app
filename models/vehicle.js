@@ -1,28 +1,29 @@
 /* eslint-disable @stylistic/js/linebreak-style */
 const mongoose = require('mongoose')
 
-const placeSchema = new mongoose.Schema({
-  name: {
-    type: String
-  },
-  street: {
+const vehicleSchema = new mongoose.Schema({
+  plate: {
     type: String,
     required: true,
   },
-  number: {
+  brand: {
     type: String,
     required: true,
   },
-  city: {
+  model: {
     type: String,
     required: true,
   },
-  province: {
+  year: {
     type: String,
     required: true,
-  }
+  },
+  insuranceImage: {
+    type: String, //store in base64
+    required: true,
+  },
 })
 
-const Place = mongoose.model('Place', placeSchema)
+const Vehicle = mongoose.model('Vehicle', vehicleSchema)
 
-module.exports = Place
+module.exports = Vehicle
