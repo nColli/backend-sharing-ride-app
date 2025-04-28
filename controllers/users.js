@@ -80,7 +80,7 @@ usersRouter.post('/', upload.fields([
   }
 
   //const token = jwt.sign(userForToken, process.env.SECRET)
-  const token = jwt.sign(
+  const tokenLogin = jwt.sign(
     userForToken,
     process.env.SECRET,
     { expiresIn: 60*60*24*30 }
@@ -89,7 +89,7 @@ usersRouter.post('/', upload.fields([
 
   response
     .status(200)
-    .send({ token, lastSavedUser })
+    .send({ tokenLogin })
 })
 
 
