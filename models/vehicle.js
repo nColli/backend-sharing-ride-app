@@ -18,10 +18,18 @@ const vehicleSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  insuranceImage: {
-    type: String, //store in base64
-    required: true,
+  capacity: {
+    type: String,
+    required: true
   },
+  kilometers: {
+    type: String,
+    required: true
+  },
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 })
 
 const Vehicle = mongoose.model('Vehicle', vehicleSchema)
