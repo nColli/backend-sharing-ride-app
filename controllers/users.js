@@ -3,6 +3,9 @@ const bcrypt = require('bcrypt')
 const usersRouter = require('express').Router()
 const User = require('../models/user')
 const Place = require('../models/place')
+const multer  = require('multer')
+const upload = multer()
+const jwt = require('jsonwebtoken')
 
 //sacar que se pueda acceder a todos los usuarios en produccion - solo para pruebas
 usersRouter.get('/', async (request, response) => {
@@ -16,10 +19,30 @@ usersRouter.get('/', async (request, response) => {
 })
 
 //signup - registrar usuario con datos basicos
-usersRouter.post('/', async (request, response) => {
-  const { email, password, name, surname, birthDate, street, number, locality, province } = request.body
+usersRouter.post('/', upload.fields([
+  { name: 'dni_frente', maxCount: 1 },
+  { name: 'dni_dorso', maxCount: 1 },
+  { name: 'selfie', maxCount: 1 }
+]), async (request, response) => {
+  console.log('request body', request.body)
+  console.log('request files', request.files)
 
-  //const isAdministrator = false
+  const userData = JSON.parse(request.body.userData)
+
+  const dniFrenteFile = request.files['dni_frente'][0]
+  const dniDorsoFile = request.files['dni_dorso'][0]
+  const selfieFile = request.files['selfie'][0]
+
+  console.log('Parsed userData:', userData)
+  console.log('dni frente file:', dniFrenteFile)
+  console.log('dni dorso file:', dniDorsoFile)
+  console.log('selfie file:', selfieFile)
+
+  const { dni, email, password, name, surname, birthDate, street, number, city, province } = userData
+
+  if (!password) {
+    return response.status(401).json({ error: 'Ingrese la contraseña' })
+  }
 
   const saltRounds = 10
   const passwordHash = await bcrypt.hash(password, saltRounds)
@@ -28,7 +51,7 @@ usersRouter.post('/', async (request, response) => {
     name: 'Casa',
     street,
     number,
-    city: locality,
+    city,
     province
   })
 
@@ -37,6 +60,7 @@ usersRouter.post('/', async (request, response) => {
   console.log('home', savedPlaceHome)
 
   const user = new User({
+    dni,
     email,
     passwordHash,
     name,
@@ -49,9 +73,25 @@ usersRouter.post('/', async (request, response) => {
   savedUser.regularPlaces = savedUser.regularPlaces.concat(savedPlaceHome._id)
   const lastSavedUser = await savedUser.save() //reescribir con la casa agregada
 
-  //dsp de refact - delvolver tambien token para iniciar sesión directamente
+  //devolver token de usuario logueado
+  const userForToken = {
+    email: lastSavedUser.email,
+    id: lastSavedUser._id,
+  }
 
-  response.status(201).json(lastSavedUser)
+  //const token = jwt.sign(userForToken, process.env.SECRET)
+  const token = jwt.sign(
+    userForToken,
+    process.env.SECRET,
+    { expiresIn: 60*60*24*30 }
+  )
+  console.log('user', lastSavedUser)
+
+  response
+    .status(200)
+    .send({ token, lastSavedUser })
 })
+
+
 
 module.exports = usersRouter

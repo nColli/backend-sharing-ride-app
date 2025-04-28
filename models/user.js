@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   //datos usuario
+  dni: {
+    type: String,
+    required: true
+  },
   name: {
     type: String,
     required: true
@@ -43,13 +47,7 @@ const userSchema = new mongoose.Schema({
       ref: 'Vehicle'
     }
   ],
-  //fotos de dni y selfie almacenadas en base64
-  document_front: {
-    type: String
-  },
-  document_back: {
-    type: String
-  },
+  //selfie almacenada en base64
   profile_photo: {
     type: String
   },
