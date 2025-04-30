@@ -42,14 +42,22 @@ vehiclesRouter.post('/', upload.fields([
   const licenciaFile = request.files['licencia'][0]
   const vehicleData = JSON.parse(request.body.vehicleData)
 
+  if (!seguroFile || !licenciaFile || !vehicleData) {
+    return response.status(401).json({ error: 'faltan completara campos' })
+  }
+
   //para asociar vehiculo con usuario tengo que sacar email de usuario del token
   //tengo que descifrarlo como en reset password
-  const userId = userExtractor(request)
+  const userOwner = await userExtractor(request)
+  const userId = userOwner._id
+
+  if (!userId) {
+    return response.status(401).json({ error: 'usuario no valido' })
+  }
 
   if (!verifyCredentials(seguroFile, licenciaFile)) {
     return response.status(401).json({ error: 'seguro o licencia invalidos' })
   }
-
 
   const {
     patente,
@@ -72,12 +80,16 @@ vehiclesRouter.post('/', upload.fields([
 
   const savedVehicle = await newVehicle.save()
 
+  if (!savedVehicle) {
+    response.status(401).send({ error: 'error al crear vehiculo' })
+  }
+
   //almacenar vehicleId en user
   const userToUpdate = await User.findById(userId)
   //const userToUpdate.vehicles = user.vehicles.concat(savedVehicle._id)
   const newUserToUpdate = userToUpdate
   newUserToUpdate.vehicles = newUserToUpdate.vehicles.concat(savedVehicle._id)
-  User.findOneAndReplace(userId, newUserToUpdate)
+  await User.findOneAndReplace(userId, newUserToUpdate)
 
   //retornar ok vehiculo registrado
   response
