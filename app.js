@@ -11,6 +11,7 @@ const logger = require('./utils/logger')
 const mongoose = require('mongoose')
 const resetpasswordRouter = require('./controllers/resetpassword')
 const vehiclesRouter = require('./controllers/vehicles')
+const tripsRouter = require('./controllers/trips')
 
 mongoose.set('strictQuery', false)
 
@@ -39,6 +40,7 @@ app.use('/api/users', usersRouter) //separar signup con users para agregar o mod
 //para acceder aca tiene que si o si tener un token valido
 app.use('/api/user', middleware.tokenValidation, userRouter)
 app.use('/api/vehicles', middleware.tokenValidation, vehiclesRouter)
+app.use('/api/trips', middleware.tokenValidation, tripsRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
