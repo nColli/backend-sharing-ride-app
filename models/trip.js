@@ -3,14 +3,10 @@ const mongoose = require('mongoose')
 
 const tripSchema = new mongoose.Schema({
   status: {
-    type: String,
+    type: String, //pendiente - en proceso - pago pendiente - finalizado
     require: true
   },
   dateStart: {
-    type: String,
-    require: true
-  },
-  dateEnd: {
     type: String,
     require: true
   },
@@ -57,12 +53,10 @@ const tripSchema = new mongoose.Schema({
     }
   ],
   tripCost: {
-    type: Number,
-    require: true
+    type: String
   },
   tripFee: {
-    type: Number, //porcentaje del costo total del viaje
-    require: true
+    type: String //porcentaje del costo total del viaje
   }
 })
 
