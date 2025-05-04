@@ -12,6 +12,7 @@ const mongoose = require('mongoose')
 const resetpasswordRouter = require('./controllers/resetpassword')
 const vehiclesRouter = require('./controllers/vehicles')
 const tripsRouter = require('./controllers/trips')
+const placesRouter = require('./controllers/places')
 
 mongoose.set('strictQuery', false)
 
@@ -41,6 +42,7 @@ app.use('/api/users', usersRouter) //separar signup con users para agregar o mod
 app.use('/api/user', middleware.tokenValidation, userRouter)
 app.use('/api/vehicles', middleware.tokenValidation, vehiclesRouter)
 app.use('/api/trips', middleware.tokenValidation, tripsRouter)
+app.use('/api/places', middleware.tokenValidation, placesRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
