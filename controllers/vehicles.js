@@ -98,5 +98,19 @@ vehiclesRouter.post('/', upload.fields([
 })
 
 
+vehiclesRouter.get('/', async (request, response) => {
+  const user = request.user
+
+  console.log('user', user)
+
+  const vehicles = await Vehicle.find({ ownerId: user.id })
+
+  console.log('vehicles owned by', user, ' are: ', vehicles)
+
+  response.status(200).send(vehicles)
+})
+
+
+
 
 module.exports = vehiclesRouter
