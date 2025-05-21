@@ -5,7 +5,8 @@ const Place = require('../models/place')
 const User = require('../models/user')
 
 function userHasVehicle(user, vehicleId) {
-  return user.vehicles.includes(vehicleId)
+  if (!user || !user.vehicles || !vehicleId) return false
+  return user.vehicles.some(id => id.toString() === vehicleId.toString())
 }
 
 function validPlaces(placeStart, placeEnd) {
@@ -21,9 +22,9 @@ tripsRouter.get('/', async (request, response) => {
 tripsRouter.post('/', async (request, response) => {
   const user = request.user
 
-  console.log('user', user.id)
+  //console.log('user', user.id)
 
-  console.log('request body', request.body)
+  //console.log('request body', request.body)
 
   //Desestrucutar request body
   const {
@@ -34,16 +35,23 @@ tripsRouter.post('/', async (request, response) => {
     searchRadiusKm,
     vehicle,
     isRoutine,
-    costPerPassenger,
+    pricePerPassenger,
   } = request.body
 
-  const vehicleId = vehicle._id
+  const vehicleId = vehicle._id.toString() // ensure we have a string ID
   const dateStart = date
 
-  const fee = costPerPassenger * 0.1 // la aplicaciones se lleva el 10% de lo que le cobra a cada pasajero el conductor, establecido por el usuario
 
-  console.log("date start: ", dateStart);
+  //console.log("price per passenger: ", pricePerPassenger);
+  
+  const feeNumber = Number(pricePerPassenger) * 0.1 // la aplicaciones se lleva el 10% de lo que le cobra a cada pasajero el conductor, establecido por el usuario
+  const fee = feeNumber.toString()
 
+
+  //console.log("fee: ", fee);
+
+  //console.log("date start: ", dateStart);
+  /*
   if (!userHasVehicle(user, vehicleId)) {
     return response.status(401).json({ error: 'Vehiculo no esta a nombre del usuario' })
   }
@@ -51,7 +59,7 @@ tripsRouter.post('/', async (request, response) => {
   if (!validPlaces(placeStart, placeEnd)) {
     return response.status(401).json({ error: 'Lugares ingresados no validos' })
   }
-
+  */
   //buscar si existe el lugar de de partida y llegada en la base de datos, si existe no crearlo, obtener el id y guardarlo en el viaje
   let placeStartId = await Place.findOne({ name: placeStart.name })
   let placeEndId = await Place.findOne({ name: placeEnd.name })
@@ -84,26 +92,27 @@ tripsRouter.post('/', async (request, response) => {
       vehicle: vehicleId,
       searchRadiusKm,
       arrivalRadiusKm,
-      tripCost: costPerPassenger,
+      tripCost: pricePerPassenger,
       tripFee: fee
     })
 
+    //console.log("new trip: ", newTrip);
+
     const savedTrip = await newTrip.save()
 
+    //console.log("saved trip: ", savedTrip);
+
     if (!savedTrip) {
-      response.status(401).send({ error: 'error al crear viaje' })
+      return response.status(401).send({ error: 'error al crear viaje' })
     }
 
     const updatedUser = user
     updatedUser.pendingTrips = user.pendingTrips.concat(savedTrip._id)
     await User.findOneAndReplace({ _id: user.id }, updatedUser)
 
-    response
-      .status(200)
-      .send({ trip: savedTrip })
+    return response.status(200).send({ trip: savedTrip })
 
   } else {
-
     const { dateStartRoutine, dateEndRoutine, days } = request.body
 
     const start = new Date(dateStartRoutine)
@@ -135,13 +144,14 @@ tripsRouter.post('/', async (request, response) => {
           vehicle: vehicleId,
           searchRadiusKm,
           arrivalRadiusKm,
-          tripCost: costPerPassenger,
+          tripCost: pricePerPassenger,
           tripFee: fee
         })
 
         const savedTrip = await newTrip.save()
         if (savedTrip) {
           savedTrips.push(savedTrip._id)
+          const updatedUser = user
           updatedUser.pendingTrips = user.pendingTrips.concat(savedTrip._id)
           await User.findOneAndReplace({ _id: user.id }, updatedUser)
         }
@@ -149,10 +159,7 @@ tripsRouter.post('/', async (request, response) => {
     }
 
     return response.status(200).json({ trips: savedTrips })
-
   }
-
-  return response.status(200).json({})
 })
 
 module.exports = tripsRouter
