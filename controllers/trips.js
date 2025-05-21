@@ -14,7 +14,7 @@ function validPlaces(placeStart, placeEnd) {
 }
 
 tripsRouter.get('/', async (request, response) => {
-  const trips = await Trip.find({})
+  const trips = await Trip.find({driver: request.user.id}).populate('driver').populate('vehicle').populate('placeStart').populate('placeEnd')
 
   response.json(trips)
 })
