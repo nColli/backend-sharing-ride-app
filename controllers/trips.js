@@ -78,12 +78,14 @@ tripsRouter.post('/', async (request, response) => {
     const newTrip = new Trip({
       status: 'pendiente',
       dateStart,
-      placeStart: newPlaceStart.id,
-      placeEnd: newPlaceEnd.id,
+      placeStart: placeStartId,
+      placeEnd: placeEndId,
       driver: user.id,
       vehicle: vehicleId,
       searchRadiusKm,
-      arrivalRadiusKm
+      arrivalRadiusKm,
+      tripCost: costPerPassenger,
+      tripFee: fee
     })
 
     const savedTrip = await newTrip.save()
@@ -93,7 +95,7 @@ tripsRouter.post('/', async (request, response) => {
     }
 
     const updatedUser = user
-    updatedUser.trips = user.trips.concat(savedTrip._id)
+    updatedUser.pendingTrips = user.pendingTrips.concat(savedTrip._id)
     await User.findOneAndReplace({ _id: user.id }, updatedUser)
 
     response
@@ -127,23 +129,24 @@ tripsRouter.post('/', async (request, response) => {
         const newTrip = new Trip({
           status: 'pendiente',
           dateStart: tripDate,
-          placeStart: newPlaceStart.id,
-          placeEnd: newPlaceEnd.id,
+          placeStart: placeStartId,
+          placeEnd: placeEndId,
           driver: user.id,
           vehicle: vehicleId,
           searchRadiusKm,
-          arrivalRadiusKm
+          arrivalRadiusKm,
+          tripCost: costPerPassenger,
+          tripFee: fee
         })
 
         const savedTrip = await newTrip.save()
         if (savedTrip) {
           savedTrips.push(savedTrip._id)
+          updatedUser.pendingTrips = user.pendingTrips.concat(savedTrip._id)
+          await User.findOneAndReplace({ _id: user.id }, updatedUser)
         }
       }
     }
-
-    user.trips = user.trips.concat(savedTrips)
-    await User.findOneAndReplace({ _id: user.id }, user)
 
     return response.status(200).json({ trips: savedTrips })
 

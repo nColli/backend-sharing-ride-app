@@ -24,7 +24,7 @@ const tripSchema = new mongoose.Schema({
   },
   vehicle: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Vehicle'
   },
   bookings: [
     {
