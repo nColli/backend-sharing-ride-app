@@ -38,7 +38,7 @@ tripsRouter.post('/', async (request, response) => {
   } = request.body
 
   const vehicleId = vehicle._id
-  const dateStart = new Date(date)
+  const dateStart = date
 
   const fee = costPerPassenger * 0.1 // la aplicaciones se lleva el 10% de lo que le cobra a cada pasajero el conductor, establecido por el usuario
 
