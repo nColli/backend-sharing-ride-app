@@ -71,13 +71,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-/**
- * GET /api/places/:id
- * Retrieves a specific place by ID that belongs to the user
- *
- * @param {String} id - The ID of the place to retrieve
- * @returns {Object} The requested place
- */
 router.get('/:id', async (req, res) => {
   try {
     // Find place by ID and verify it belongs to the user

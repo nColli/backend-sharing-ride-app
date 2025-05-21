@@ -25,12 +25,24 @@ tripsRouter.post('/', async (request, response) => {
 
   console.log('request body', request.body)
 
-  const { vehicleId, placeStart, placeEnd, dateStart, isRoutine, searchRadiusKm, arrivalRadiusKm } = request.body
-  /*
-  const totalCost = estimateCost(placeStart, placeEnd)
+  //Desestrucutar request body
+  const {
+    arrivalRadiusKm,
+    date,
+    placeEnd,
+    placeStart,
+    searchRadiusKm,
+    vehicle,
+    isRoutine,
+    costPerPassenger,
+  } = request.body
 
-  const fee = totalCost * 0.1
-  */
+  const vehicleId = vehicle._id
+  const dateStart = new Date(date)
+
+  const fee = costPerPassenger * 0.1 // la aplicaciones se lleva el 10% de lo que le cobra a cada pasajero el conductor, establecido por el usuario
+
+  console.log("date start: ", dateStart);
 
   if (!userHasVehicle(user, vehicleId)) {
     return response.status(401).json({ error: 'Vehiculo no esta a nombre del usuario' })
@@ -40,16 +52,25 @@ tripsRouter.post('/', async (request, response) => {
     return response.status(401).json({ error: 'Lugares ingresados no validos' })
   }
 
-  const newPlaceStart = new Place({
-    ...placeStart
-  })
+  //buscar si existe el lugar de de partida y llegada en la base de datos, si existe no crearlo, obtener el id y guardarlo en el viaje
+  let placeStartId = await Place.findOne({ name: placeStart.name })
+  let placeEndId = await Place.findOne({ name: placeEnd.name })
 
-  const newPlaceEnd= new Place({
-    ...placeEnd
-  })
+  if (!placeStartId) {
+    const newPlaceStart = new Place({
+      ...placeStart
+    })
+    const newPlace = await newPlaceStart.save()
+    placeStartId = newPlace._id
+  }
 
-  await newPlaceStart.save()
-  await newPlaceEnd.save()
+  if (!placeEndId) {
+    const newPlaceEnd = new Place({
+      ...placeEnd
+    })
+    const newPlace = await newPlaceEnd.save()
+    placeEndId = newPlace._id
+  }
 
   //crear en loop o crear un solo trip
   if (!isRoutine) {
