@@ -3,7 +3,7 @@ const tripsRouter = require('express').Router()
 const Trip = require('../models/trip')
 const Place = require('../models/place')
 const User = require('../models/user')
-
+/*
 function userHasVehicle(user, vehicleId) {
   if (!user || !user.vehicles || !vehicleId) return false
   return user.vehicles.some(id => id.toString() === vehicleId.toString())
@@ -12,9 +12,9 @@ function userHasVehicle(user, vehicleId) {
 function validPlaces(placeStart, placeEnd) {
   return placeStart && placeEnd //verifico que existan
 }
-
+*/
 tripsRouter.get('/', async (request, response) => {
-  const trips = await Trip.find({driver: request.user.id}).populate('driver').populate('vehicle').populate('placeStart').populate('placeEnd')
+  const trips = await Trip.find({ driver: request.user.id }).populate('driver').populate('vehicle').populate('placeStart').populate('placeEnd')
 
   response.json(trips)
 })
@@ -43,7 +43,7 @@ tripsRouter.post('/', async (request, response) => {
 
 
   //console.log("price per passenger: ", pricePerPassenger);
-  
+
   const feeNumber = Number(pricePerPassenger) * 0.1 // la aplicaciones se lleva el 10% de lo que le cobra a cada pasajero el conductor, establecido por el usuario
   const fee = feeNumber.toString()
 

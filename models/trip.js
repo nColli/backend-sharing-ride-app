@@ -29,7 +29,7 @@ const tripSchema = new mongoose.Schema({
   bookings: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Booking'
+      ref: 'Reserve'
     }
   ],
   searchRadiusKm: {
@@ -52,7 +52,7 @@ const tripSchema = new mongoose.Schema({
       ref: 'Message'
     }
   ],
-  tripCost: {
+  tripCost: { //por pasajero
     type: String
   },
   tripFee: {
