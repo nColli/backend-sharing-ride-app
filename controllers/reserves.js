@@ -3,7 +3,6 @@ const Reserve = require('../models/reserve')
 const Trip = require('../models/trip')
 const axios = require('axios')
 const Vehicle = require('../models/vehicle')
-const User = require('../models/user')
 
 const fechaCerca = (trip, date) => {
   const tripDate = new Date(trip.dateStart)
@@ -79,7 +78,7 @@ const estaDisponible = async (trip) => {
 
   const vehicle = await Vehicle.findById(vehicleId)
 
-  console.log('capacidad', vehicle)
+  //console.log('capacidad', vehicle)
 
   return Number(vehicle.capacity) < trip.bookings.length
 }
@@ -109,13 +108,19 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
     return false
   }
 
+  //console.log('date:', date)
+
   //asumo que hay un viaje elegido, creo la reserva y la guardo
   const newReserve = new Reserve({
     status: 'pendiente',
     placeStart,
     placeEnd,
-    date
+    dateStart: date,
+    user: user.id
   })
+
+  //console.log('newReserve', newReserve)
+
   const reserve = await newReserve.save()
 
   //guardar reserva id en usuario
@@ -227,9 +232,10 @@ reservesRouter.get('/', async (request, response) => {
 
   //console.log('obt reservas pendientes')
 
-  const reservas = await User.find({ _id: user._id }).populate('pendingReserves')
+  //const reservas = await User.find({ _id: user._id }).populate('pendingReserves')
+  //const reserves = reservas[0].pendingReserves
 
-  const reserves = reservas[0].pendingReserves
+  const reserves = await Reserve.find({ user: user.id })
 
   return response.status(200).send(reserves)
 })
