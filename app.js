@@ -14,6 +14,7 @@ const resetpasswordRouter = require('./controllers/resetpassword')
 const vehiclesRouter = require('./controllers/vehicles')
 const tripsRouter = require('./controllers/trips')
 const placesRouter = require('./controllers/places')
+const reservesRouter = require('./controllers/reserves')
 
 mongoose.set('strictQuery', false)
 
@@ -43,6 +44,7 @@ app.use('/api/user', middleware.tokenValidation, userRouter)
 app.use('/api/vehicles', middleware.tokenValidation, vehiclesRouter)
 app.use('/api/trips', middleware.tokenValidation, tripsRouter)
 app.use('/api/places', middleware.tokenValidation, placesRouter)
+app.use('/api/reserves', middleware.tokenValidation, reservesRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
