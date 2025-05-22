@@ -3,6 +3,7 @@ const Reserve = require('../models/reserve')
 const Trip = require('../models/trip')
 const axios = require('axios')
 const Vehicle = require('../models/vehicle')
+const User = require('../models/user')
 
 const fechaCerca = (trip, date) => {
   const tripDate = new Date(trip.dateStart)
@@ -63,15 +64,22 @@ const lugarCerca = async (trip, placeStart, placeEnd) => {
   }
 }
 
-const estaDisponible = (trip) => {
+const estaDisponible = async (trip) => {
   //verifica si tiene capacidad y si el estado es en pendiente
-  if (trip.estado !== 'pendiente') {
+  //console.log('verificando si esta disponible')
+
+  if (trip.status !== 'pendiente') {
+    //console.log('viaje no esta pendiente', trip)
     return false
   }
 
+  //console.log('viaje esta pendiente')
+
   const vehicleId = trip.vehicle
 
-  const vehicle = Vehicle.findById(vehicleId)
+  const vehicle = await Vehicle.findById(vehicleId)
+
+  console.log('capacidad', vehicle)
 
   return Number(vehicle.capacity) < trip.bookings.length
 }
@@ -79,9 +87,11 @@ const estaDisponible = (trip) => {
 
 const findTrip = async (placeStart, placeEnd, date) => {
   //buscar en la lista de viajes por hacer
-  const trips = Trip.find()
+  const trips = await Trip.find()
+  //console.log('lista de viajes donde buscar', trips)
+
   let tripElegido = null
-  trips.map((trip) => {
+  trips.map(async (trip) => {
     if (estaDisponible(trip) && fechaCerca(trip, date) && lugarCerca(trip, placeStart, placeEnd)) {
       tripElegido = trip
     }
@@ -166,6 +176,9 @@ reservesRouter.post('/', async (request, response) => {
     isRoutine,
   } = request.body
 
+  //console.log('body recibido', request.body)
+  console.log('es rutina:', isRoutine)
+
   if (isRoutine) {
     const { reserves, allCreate } = await createRoutine(request.body)
 
@@ -182,6 +195,7 @@ reservesRouter.post('/', async (request, response) => {
 
   } else {
     //crear una sola reserva
+    console.log('registrando reserva no rutinaria')
     const reserve =  await findCreateReserve(placeStart, placeEnd, date, user)
 
     if (reserve === false) {
@@ -211,7 +225,11 @@ reservesRouter.patch('/confirm', async (request, response) => {
 reservesRouter.get('/', async (request, response) => {
   const user = request.user
 
-  const reserves = await user.pendingReserves.populate()
+  //console.log('obt reservas pendientes')
+
+  const reservas = await User.find({ _id: user._id }).populate('pendingReserves')
+
+  const reserves = reservas[0].pendingReserves
 
   return response.status(200).send(reserves)
 })
