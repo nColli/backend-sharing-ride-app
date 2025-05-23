@@ -235,7 +235,7 @@ reservesRouter.get('/', async (request, response) => {
   //const reservas = await User.find({ _id: user._id }).populate('pendingReserves')
   //const reserves = reservas[0].pendingReserves
 
-  const reserves = await Reserve.find({ user: user.id })
+  const reserves = await Reserve.find({ user: user.id }).populate('placeStart').populate('placeEnd')
 
   return response.status(200).send(reserves)
 })
