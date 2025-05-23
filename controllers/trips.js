@@ -3,6 +3,7 @@ const tripsRouter = require('express').Router()
 const Trip = require('../models/trip')
 const Place = require('../models/place')
 const User = require('../models/user')
+const Message = require('../models/message')
 /*
 function userHasVehicle(user, vehicleId) {
   if (!user || !user.vehicles || !vehicleId) return false
@@ -115,7 +116,7 @@ tripsRouter.post('/', async (request, response) => {
   } else {
     const { dateStartRoutine, dateEndRoutine, days } = request.body
 
-    const start = new Date(dateStartRoutine)
+    const start = new Date(dateStartRoutine) //en start y end esta la hora del viaje, se usa para establecer la hora de comienzo de cada viaje
     const end = new Date(dateEndRoutine)
     const dayMap = {
       0: 'Sunday',
@@ -128,7 +129,7 @@ tripsRouter.post('/', async (request, response) => {
     }
 
     const savedTrips = []
-
+    //sumo un dia pero la hora que esta en d se conserva
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dayName = dayMap[d.getDay()]
 
@@ -160,6 +161,68 @@ tripsRouter.post('/', async (request, response) => {
 
     return response.status(200).json({ trips: savedTrips })
   }
+})
+
+tripsRouter.get('/chat/:id', async (request, response) => {
+  //con el id obtengo que viaje es, eso me permite buscar en Trip el trip y obtener los chat, luego retorno un array con todos los mensajes incluido el dueño y el mensaje
+  const tripId = request.params.id
+  // Find messages for the given tripId, populate user with only name and surname
+  const messages = await Message.find({ trip: tripId }).populate({
+    path: 'user',
+    select: 'name surname _id'
+  })
+
+  if (!messages) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  response.json({ messages })
+})
+
+//id de trip para agregarlo al chat del viaje, luego se retorna todos los mensajes con la descripcion de los mismos
+tripsRouter.post('/chat/:id', async (request, response) => {
+  const tripId = request.params.id
+  const user = request.user
+
+  const trip = await Trip.findById(tripId)
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  const { message } = request.body
+
+  if (!message) {
+    return response.status(404).json({ error: 'Message not found' })
+  }
+
+  let isDriver = false
+
+  const userId = user._id.toString()
+  const driverId = trip.driver.toString()
+
+  //console.log('user._id', userId)
+  //console.log('trip.driver', driverId)
+
+  if (userId === driverId) {
+    console.log('user is driver')
+    isDriver = true
+  }
+
+  const newMessage = new Message({
+    trip: tripId,
+    user: user.id,
+    message,
+    isDriver
+  })
+
+  console.log('message before saved:', newMessage)
+
+  const savedMessage = await newMessage.save()
+
+  trip.chat = trip.chat.concat(savedMessage._id)
+  await trip.save()
+  response.status(201).json(savedMessage)
 })
 
 module.exports = tripsRouter
