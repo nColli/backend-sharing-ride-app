@@ -4,6 +4,7 @@ const Trip = require('../models/trip')
 const Place = require('../models/place')
 const User = require('../models/user')
 const Message = require('../models/message')
+const Reserve = require('../models/reserve')
 /*
 function userHasVehicle(user, vehicleId) {
   if (!user || !user.vehicles || !vehicleId) return false
@@ -223,6 +224,40 @@ tripsRouter.post('/chat/:id', async (request, response) => {
   trip.chat = trip.chat.concat(savedMessage._id)
   await trip.save()
   response.status(201).json(savedMessage)
+})
+
+//obtener viaje con id en url
+tripsRouter.get('/:id', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId)
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  response.json(trip)
+})
+
+//eliminar viaje con id en url
+//se deben eliminar las reservas asociadas a ese viaje y actualizar a los usuarios con las listas de reservas y viajes
+tripsRouter.delete('/:id', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId)
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  //eliminar las reservas asociadas a ese viaje
+  const reserves = await Reserve.find({ trip: tripId })
+  for (const reserve of reserves) {
+    await Reserve.findByIdAndDelete(reserve._id)
+  }
+
+  //eliminar el viaje
+  await Trip.findByIdAndDelete(tripId)
+
+  response.json({ message: 'Trip deleted' })
 })
 
 module.exports = tripsRouter
