@@ -254,6 +254,10 @@ tripsRouter.delete('/:id', async (request, response) => {
     await Reserve.findByIdAndDelete(reserve._id)
   }
 
+  const user = await User.findById(trip.driver)
+  user.pendingTrips = user.pendingTrips.filter((trip) => trip._id.toString() !== trip._id.toString())
+  await user.save()
+
   //eliminar el viaje
   await Trip.findByIdAndDelete(tripId)
 

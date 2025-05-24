@@ -3,6 +3,7 @@ const Reserve = require('../models/reserve')
 const Trip = require('../models/trip')
 const axios = require('axios')
 const Vehicle = require('../models/vehicle')
+const User = require('../models/user')
 
 const fechaCerca = (trip, date) => {
   const tripDate = new Date(trip.dateStart)
@@ -116,7 +117,8 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
     placeStart,
     placeEnd,
     dateStart: date,
-    user: user.id
+    user: user.id,
+    trip: trip._id
   })
 
   //console.log('newReserve', newReserve)
@@ -239,5 +241,52 @@ reservesRouter.get('/', async (request, response) => {
 
   return response.status(200).send(reserves)
 })
+
+reservesRouter.get('/', async (request, response) => {
+  const user = request.user
+
+  const reserves = await Reserve.find({ user: user.id })
+
+  return response.status(200).send(reserves)
+})
+
+// obtener reserva con id en url - IMP: NO POPULAR con trip
+reservesRouter.get('/:id', async (request, response) => {
+  const { id } = request.params
+
+  const reserve = await Reserve.findById(id)
+    .populate('placeStart')
+    .populate('placeEnd')
+
+  if (!reserve) {
+    return response.status(404).send({ error: 'Reserva no encontrada' })
+  }
+
+  return response.status(200).send(reserve)
+})
+
+
+//eliminar reserva con id en url
+reservesRouter.delete('/:id', async (request, response) => {
+  const { id } = request.params
+
+  const reserve = await Reserve.findByIdAndDelete(id)
+
+  if (!reserve) {
+    return response.status(404).send({ error: 'Reserva no encontrada' })
+  }
+
+  const user = await User.findById(reserve.user)
+  user.pendingReserves = user.pendingReserves.filter((reserve) => reserve._id.toString() !== reserve._id.toString())
+  await user.save()
+
+  const trip = await Trip.findById(reserve.trip)
+
+  trip.bookings = trip.bookings.filter((booking) => booking.toString() !== reserve.toString())
+  await Trip.findOneAndReplace({ _id: trip._id }, trip)
+
+  return response.status(200).send({ message: 'Reserva eliminada' })
+})
+
 
 module.exports = reservesRouter
