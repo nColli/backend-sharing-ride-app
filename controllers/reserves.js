@@ -257,6 +257,7 @@ reservesRouter.get('/:id', async (request, response) => {
   const reserve = await Reserve.findById(id)
     .populate('placeStart')
     .populate('placeEnd')
+    .populate('trip')
 
   if (!reserve) {
     return response.status(404).send({ error: 'Reserva no encontrada' })
