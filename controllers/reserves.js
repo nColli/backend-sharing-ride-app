@@ -220,7 +220,7 @@ async function confirmarReserva(reserve) {
 
 reservesRouter.patch('/confirm', async (request, response) => {
   //hacer que los reserves enviados pasen a confirmados, para que admita rutinas envio reserves, si es uno solo es un arrray de un elemento
-  const { reserves } = request.body
+  const reserves = request.body
 
   reserves.map(async (reserve) => {
     await confirmarReserva(reserve)
