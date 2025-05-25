@@ -229,7 +229,7 @@ tripsRouter.post('/chat/:id', async (request, response) => {
 //obtener viaje con id en url
 tripsRouter.get('/:id', async (request, response) => {
   const tripId = request.params.id
-  const trip = await Trip.findById(tripId)
+  const trip = await Trip.findById(tripId).populate('placeStart').populate('placeEnd').populate('driver').populate('bookings')
 
   if (!trip) {
     return response.status(404).json({ error: 'Trip not found' })
