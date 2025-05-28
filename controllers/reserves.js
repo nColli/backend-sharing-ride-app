@@ -4,6 +4,7 @@ const Trip = require('../models/trip')
 const axios = require('axios')
 const Vehicle = require('../models/vehicle')
 const User = require('../models/user')
+const Place = require('../models/place')
 
 const fechaCerca = (trip, date) => {
   const tripDate = new Date(trip.dateStart)
@@ -65,30 +66,20 @@ const lugarCerca = async (trip, placeStart, placeEnd) => {
 }
 
 const estaDisponible = async (trip) => {
-  //verifica si tiene capacidad y si el estado es en pendiente
-  //console.log('verificando si esta disponible')
-
   if (trip.status !== 'pendiente') {
-    //console.log('viaje no esta pendiente', trip)
     return false
   }
-
-  //console.log('viaje esta pendiente')
 
   const vehicleId = trip.vehicle
 
   const vehicle = await Vehicle.findById(vehicleId)
-
-  //console.log('capacidad', vehicle)
 
   return Number(vehicle.capacity) < trip.bookings.length
 }
 
 
 const findTrip = async (placeStart, placeEnd, date) => {
-  //buscar en la lista de viajes por hacer
   const trips = await Trip.find()
-  //console.log('lista de viajes donde buscar', trips)
 
   let tripElegido = null
   trips.map(async (trip) => {
@@ -109,19 +100,29 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
     return false
   }
 
-  //console.log('date:', date)
+  //creo el lugar de partida y el de llegada
+  const placeStartSaved = new Place({
+    street: placeStart.street,
+    number: placeStart.number,
+    city: placeStart.city,
+    province: placeStart.province
+  })
 
-  //asumo que hay un viaje elegido, creo la reserva y la guardo
+  const placeEndSaved = new Place({
+    street: placeEnd.street,
+    number: placeEnd.number,
+    city: placeEnd.city,
+    province: placeEnd.province
+  })
+
   const newReserve = new Reserve({
     status: 'pendiente',
-    placeStart,
-    placeEnd,
+    placeStart: placeStartSaved._id,
+    placeEnd: placeEndSaved._id,
     dateStart: date,
     user: user.id,
     trip: trip._id
   })
-
-  //console.log('newReserve', newReserve)
 
   const reserve = await newReserve.save()
 
@@ -138,10 +139,10 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
 
 const createRoutine = async (bodyRequest) => {
   //crear rutina
-  const { placeStart, placeEnd, dateStartRoutine, dateEndRoutine, days, user } = bodyRequest
+  const { placeStart, placeEnd, dateStart, dateEnd, days, user } = bodyRequest
 
-  const start = new Date(dateStartRoutine)
-  const end = new Date(dateEndRoutine)
+  const start = new Date(dateStart)
+  const end = new Date(dateEnd)
   const dayMap = {
     0: 'Sunday',
     1: 'Monday',
