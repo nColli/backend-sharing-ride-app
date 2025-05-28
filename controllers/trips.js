@@ -24,10 +24,6 @@ tripsRouter.get('/', async (request, response) => {
 tripsRouter.post('/', async (request, response) => {
   const user = request.user
 
-  //console.log('user', user.id)
-
-  //console.log('request body', request.body)
-
   //Desestrucutar request body
   const {
     arrivalRadiusKm,
@@ -43,25 +39,9 @@ tripsRouter.post('/', async (request, response) => {
   const vehicleId = vehicle._id.toString() // ensure we have a string ID
   const dateStart = date
 
-
-  //console.log("price per passenger: ", pricePerPassenger);
-
   const feeNumber = Number(pricePerPassenger) * 0.1 // la aplicaciones se lleva el 10% de lo que le cobra a cada pasajero el conductor, establecido por el usuario
   const fee = feeNumber.toString()
 
-
-  //console.log("fee: ", fee);
-
-  //console.log("date start: ", dateStart);
-  /*
-  if (!userHasVehicle(user, vehicleId)) {
-    return response.status(401).json({ error: 'Vehiculo no esta a nombre del usuario' })
-  }
-
-  if (!validPlaces(placeStart, placeEnd)) {
-    return response.status(401).json({ error: 'Lugares ingresados no validos' })
-  }
-  */
   //buscar si existe el lugar de de partida y llegada en la base de datos, si existe no crearlo, obtener el id y guardarlo en el viaje
   let placeStartId = await Place.findOne({ name: placeStart.name })
   let placeEndId = await Place.findOne({ name: placeEnd.name })
@@ -115,10 +95,10 @@ tripsRouter.post('/', async (request, response) => {
     return response.status(200).send({ trip: savedTrip })
 
   } else {
-    const { dateStartRoutine, dateEndRoutine, days } = request.body
+    const { dateStart, dateEnd, days } = request.body
 
-    const start = new Date(dateStartRoutine) //en start y end esta la hora del viaje, se usa para establecer la hora de comienzo de cada viaje
-    const end = new Date(dateEndRoutine)
+    const start = new Date(dateStart) //en start y end esta la hora del viaje, se usa para establecer la hora de comienzo de cada viaje
+    const end = new Date(dateEnd)
     const dayMap = {
       0: 'Sunday',
       1: 'Monday',
@@ -151,6 +131,7 @@ tripsRouter.post('/', async (request, response) => {
         })
 
         const savedTrip = await newTrip.save()
+
         if (savedTrip) {
           savedTrips.push(savedTrip._id)
           const updatedUser = user
