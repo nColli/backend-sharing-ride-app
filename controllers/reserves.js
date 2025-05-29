@@ -290,5 +290,19 @@ reservesRouter.delete('/:id', async (request, response) => {
   return response.status(200).send({ message: 'Reserva eliminada' })
 })
 
+reservesRouter.get('/trip/:id', async (request, response) => {
+  const { id } = request.params
+
+  const trip = await Trip.findById(id)
+
+  if (!trip) {
+    return response.status(404).send({ error: 'Viaje no encontrado' })
+  }
+
+  const reserves = await Reserve.find({ trip: trip._id }).populate('placeStart').populate('placeEnd')
+
+  return response.status(200).send(reserves)
+})
+
 
 module.exports = reservesRouter
