@@ -15,6 +15,7 @@ const vehiclesRouter = require('./controllers/vehicles')
 const tripsRouter = require('./controllers/trips')
 const placesRouter = require('./controllers/places')
 const reservesRouter = require('./controllers/reserves')
+const paymentsRouter = require('./controllers/payments')
 
 mongoose.set('strictQuery', false)
 
@@ -45,6 +46,9 @@ app.use('/api/vehicles', middleware.tokenValidation, vehiclesRouter)
 app.use('/api/trips', middleware.tokenValidation, tripsRouter)
 app.use('/api/places', middleware.tokenValidation, placesRouter)
 app.use('/api/reserves', middleware.tokenValidation, reservesRouter)
+
+//solo un admin puede acceder a configurar metodos de pago y comisiones, y ver estadisticas
+app.use('/api/payments', middleware.tokenValidation, middleware.adminValidation, paymentsRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)

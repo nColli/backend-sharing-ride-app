@@ -6,6 +6,7 @@ const User = require('../models/user')
 const Message = require('../models/message')
 const Reserve = require('../models/reserve')
 const Payment = require('../models/payment')
+const Opinion = require('../models/opinion')
 /*
 function userHasVehicle(user, vehicleId) {
   if (!user || !user.vehicles || !vehicleId) return false
@@ -40,7 +41,8 @@ tripsRouter.post('/', async (request, response) => {
   const vehicleId = vehicle._id.toString() // ensure we have a string ID
   const dateStart = date
 
-  const feeNumber = Number(pricePerPassenger) * 0.1 // la aplicaciones se lleva el 10% de lo que le cobra a cada pasajero el conductor, establecido por el usuario
+  const payment = await Payment.findOne({})
+  const feeNumber = Number(pricePerPassenger) * payment.fee
   const fee = feeNumber.toString()
 
   //buscar si existe el lugar de de partida y llegada en la base de datos, si existe no crearlo, obtener el id y guardarlo en el viaje
@@ -274,6 +276,10 @@ tripsRouter.put('/:id/start', async (request, response) => {
 tripsRouter.put('/:id/finish', async (request, response) => {
   const tripId = request.params.id
   const trip = await Trip.findById(tripId)
+  const { opinions } = request.body
+  // opinions array de opinions
+  //estructura opinion:
+  // { userTo, opinion }
 
   if (!trip) {
     return response.status(404).json({ error: 'Trip not found' })
@@ -281,6 +287,20 @@ tripsRouter.put('/:id/finish', async (request, response) => {
 
   if (trip.status !== 'en proceso') {
     return response.status(400).json({ error: 'Trip not started' })
+  }
+
+  //crear opinion por cada pasajero que haya ingresado
+  for (const opinionUser of opinions) {
+    const opinion = new Opinion({
+      user: trip.driver,
+      userTo: opinionUser.userTo,
+      trip: tripId,
+      opinion: opinionUser.opinion
+    })
+    await opinion.save()
+    //guardar en el viaje
+    trip.opinions = trip.opinions.concat(opinion._id)
+    await trip.save()
   }
 
   trip.status = 'pago pendiente'
@@ -306,6 +326,40 @@ tripsRouter.put('/:id/confirm-payment', async (request, response) => {
   await trip.save()
 
   response.json({ message: 'Trip confirmed payment' })
+})
+
+tripsRouter.put('/:id/review-driver', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId)
+  const { reviewDriver } = request.body
+  //estructura review:
+  // { user, opinion }
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  if (trip.status !== 'completado' || trip.status !== 'pago pendiente') {
+    return response.status(400).json({ error: 'Trip not completed' })
+  }
+
+  // si el usuario no es pasajero, no puede dejar una review
+  const passenger = trip.bookings.find(booking => booking.user.toString() === reviewDriver.user.toString())
+  if (!passenger) {
+    return response.status(400).json({ error: 'User is not a passenger' })
+  }
+
+  const review = new Opinion({
+    user: reviewDriver.user,
+    userTo: trip.driver,
+    trip: tripId,
+    opinion: reviewDriver.opinion
+  })
+  await review.save()
+  trip.opinions = trip.opinions.concat(review._id)
+  await trip.save()
+
+  response.json({ message: 'Review driver saved' })
 })
 
 module.exports = tripsRouter
