@@ -61,10 +61,18 @@ const tokenValidation = async (request, response, next) => {
   next()
 }
 
+const adminValidation = async (request, response, next) => {
+  if (!request.user.isAdministrator) {
+    return response.status(401).json({ error: 'Unauthorized' })
+  }
+  next()
+}
+
 module.exports = {
   requestLogger,
   unknownEndpoint,
   errorHandler,
   userExtractor,
-  tokenValidation
+  tokenValidation,
+  adminValidation
 }

@@ -5,6 +5,7 @@ const Place = require('../models/place')
 const User = require('../models/user')
 const Message = require('../models/message')
 const Reserve = require('../models/reserve')
+const Payment = require('../models/payment')
 /*
 function userHasVehicle(user, vehicleId) {
   if (!user || !user.vehicles || !vehicleId) return false
@@ -183,9 +184,6 @@ tripsRouter.post('/chat/:id', async (request, response) => {
   const userId = user._id.toString()
   const driverId = trip.driver.toString()
 
-  //console.log('user._id', userId)
-  //console.log('trip.driver', driverId)
-
   if (userId === driverId) {
     console.log('user is driver')
     isDriver = true
@@ -243,6 +241,71 @@ tripsRouter.delete('/:id', async (request, response) => {
   await Trip.findByIdAndDelete(tripId)
 
   response.json({ message: 'Trip deleted' })
+})
+
+//iniciar viaje con id en url
+tripsRouter.put('/:id/start', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId)
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  if (trip.status === 'en proceso') {
+    return response.status(400).json({ error: 'Trip already started' })
+  }
+
+  if (trip.status === 'completado' || trip.status === 'pago pendiente') {
+    return response.status(400).json({ error: 'Trip already completed' })
+  }
+
+  trip.status = 'en proceso'
+  await trip.save()
+
+  const payment = await Payment.findOne({})
+  const alias = payment.alias
+  const motivo = tripId //motivo transf conductor
+
+  response.json({ alias, motivo })
+})
+
+//terminar viaje, conductor debe ser el que envia la request, envia con una opinion por cada pasajero, array de opiniones, con cada una el id del usuario o la rseserva
+tripsRouter.put('/:id/finish', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId)
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  if (trip.status !== 'en proceso') {
+    return response.status(400).json({ error: 'Trip not started' })
+  }
+
+  trip.status = 'pago pendiente'
+  await trip.save()
+
+  response.json({ message: 'Trip finished' })
+})
+
+//terminar viaje, confirmacion de pago
+tripsRouter.put('/:id/confirm-payment', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId)
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  if (trip.status !== 'pago pendiente') {
+    return response.status(400).json({ error: 'Trip not in payment pending status' })
+  }
+
+  trip.status = 'completado'
+  await trip.save()
+
+  response.json({ message: 'Trip confirmed payment' })
 })
 
 module.exports = tripsRouter
