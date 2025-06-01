@@ -148,6 +148,30 @@ tripsRouter.post('/', async (request, response) => {
   }
 })
 
+//next-trip del conductor que lo solicita
+tripsRouter.get('/next-trip', async (request, response) => {
+  const user = request.user
+  console.log('user', user)
+
+  const trips = await Trip.find({ driver: user._id })
+
+  //si retorna null en frontend, busca en reservas donde es pasajero, saca estado de usuario
+  if (trips.length === 0) {
+    return response.status(404).json({ error: 'No trips found' })
+  }
+
+  let nextTrip = trips[0]
+  trips.map(trip => {
+    if (trip.dateStart < nextTrip.dateStart) {
+      nextTrip = trip
+    }
+  })
+  if (!nextTrip) {
+    return response.status(404).json({ error: 'No next trip found' })
+  }
+  response.json(nextTrip)
+})
+
 tripsRouter.get('/chat/:id', async (request, response) => {
   //con el id obtengo que viaje es, eso me permite buscar en Trip el trip y obtener los chat, luego retorno un array con todos los mensajes incluido el dueño y el mensaje
   const tripId = request.params.id
@@ -207,46 +231,13 @@ tripsRouter.post('/chat/:id', async (request, response) => {
   response.status(201).json(savedMessage)
 })
 
-//obtener viaje con id en url
-tripsRouter.get('/:id', async (request, response) => {
-  const tripId = request.params.id
-  const trip = await Trip.findById(tripId).populate('placeStart').populate('placeEnd').populate('driver').populate('bookings')
 
-  if (!trip) {
-    return response.status(404).json({ error: 'Trip not found' })
-  }
-
-  response.json(trip)
-})
-
-//eliminar viaje con id en url
-//se deben eliminar las reservas asociadas a ese viaje y actualizar a los usuarios con las listas de reservas y viajes
-tripsRouter.delete('/:id', async (request, response) => {
-  const tripId = request.params.id
-  const trip = await Trip.findById(tripId)
-
-  if (!trip) {
-    return response.status(404).json({ error: 'Trip not found' })
-  }
-
-  //eliminar las reservas asociadas a ese viaje
-  const reserves = await Reserve.find({ trip: tripId })
-  for (const reserve of reserves) {
-    await Reserve.findByIdAndDelete(reserve._id)
-  }
-
-  const user = await User.findById(trip.driver)
-  user.pendingTrips = user.pendingTrips.filter((trip) => trip._id.toString() !== trip._id.toString())
-  await user.save()
-
-  //eliminar el viaje
-  await Trip.findByIdAndDelete(tripId)
-
-  response.json({ message: 'Trip deleted' })
-})
 
 //iniciar viaje con id en url
-tripsRouter.put('/:id/start', async (request, response) => {
+tripsRouter.put('/start/:id', async (request, response) => {
+  //AGREGAR VERIFICACION QUE SOLO SE PUEDA INICIAR SI FALTA MEDIA HORA
+  //sin verificar para testing
+
   const tripId = request.params.id
   const trip = await Trip.findById(tripId)
 
@@ -273,7 +264,7 @@ tripsRouter.put('/:id/start', async (request, response) => {
 })
 
 //terminar viaje, conductor debe ser el que envia la request, envia con una opinion por cada pasajero, array de opiniones, con cada una el id del usuario o la rseserva
-tripsRouter.put('/:id/finish', async (request, response) => {
+tripsRouter.put('/finish/:id', async (request, response) => {
   const tripId = request.params.id
   const trip = await Trip.findById(tripId)
   const { opinions } = request.body
@@ -310,7 +301,7 @@ tripsRouter.put('/:id/finish', async (request, response) => {
 })
 
 //terminar viaje, confirmacion de pago
-tripsRouter.put('/:id/confirm-payment', async (request, response) => {
+tripsRouter.put('/confirm-payment/:id', async (request, response) => {
   const tripId = request.params.id
   const trip = await Trip.findById(tripId)
 
@@ -328,7 +319,7 @@ tripsRouter.put('/:id/confirm-payment', async (request, response) => {
   response.json({ message: 'Trip confirmed payment' })
 })
 
-tripsRouter.put('/:id/review-driver', async (request, response) => {
+tripsRouter.put('/review-driver/:id', async (request, response) => {
   const tripId = request.params.id
   const trip = await Trip.findById(tripId)
   const { reviewDriver } = request.body
@@ -360,6 +351,44 @@ tripsRouter.put('/:id/review-driver', async (request, response) => {
   await trip.save()
 
   response.json({ message: 'Review driver saved' })
+})
+
+//obtener viaje con id en url
+tripsRouter.get('/:id', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId).populate('placeStart').populate('placeEnd').populate('driver').populate('bookings')
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  response.json(trip)
+})
+
+//eliminar viaje con id en url
+//se deben eliminar las reservas asociadas a ese viaje y actualizar a los usuarios con las listas de reservas y viajes
+tripsRouter.delete('/:id', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId)
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  //eliminar las reservas asociadas a ese viaje
+  const reserves = await Reserve.find({ trip: tripId })
+  for (const reserve of reserves) {
+    await Reserve.findByIdAndDelete(reserve._id)
+  }
+
+  const user = await User.findById(trip.driver)
+  user.pendingTrips = user.pendingTrips.filter((trip) => trip._id.toString() !== trip._id.toString())
+  await user.save()
+
+  //eliminar el viaje
+  await Trip.findByIdAndDelete(tripId)
+
+  response.json({ message: 'Trip deleted' })
 })
 
 module.exports = tripsRouter
