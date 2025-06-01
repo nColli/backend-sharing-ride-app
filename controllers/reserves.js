@@ -243,10 +243,35 @@ reservesRouter.get('/', async (request, response) => {
   return response.status(200).send(reserves)
 })
 
-reservesRouter.get('/', async (request, response) => {
+reservesRouter.get('/next-reserve', async (request, response) => {
   const user = request.user
-
   const reserves = await Reserve.find({ user: user.id })
+  if (reserves.length === 0) {
+    return response.status(404).send({ error: 'No reserves found' })
+  }
+  let nextReserve = reserves[0]
+  const today = new Date()
+  reserves.map(reserve => {
+    if (reserve.dateStart < nextReserve.dateStart && reserve.dateStart > today) {
+      nextReserve = reserve
+    }
+  })
+  if (!nextReserve) {
+    return response.status(404).send({ error: 'No next reserve found' })
+  }
+  return response.status(200).send(nextReserve)
+})
+
+reservesRouter.get('/trip/:id', async (request, response) => {
+  const { id } = request.params
+
+  const trip = await Trip.findById(id)
+
+  if (!trip) {
+    return response.status(404).send({ error: 'Viaje no encontrado' })
+  }
+
+  const reserves = await Reserve.find({ trip: trip._id }).populate('placeStart').populate('placeEnd')
 
   return response.status(200).send(reserves)
 })
@@ -289,20 +314,5 @@ reservesRouter.delete('/:id', async (request, response) => {
 
   return response.status(200).send({ message: 'Reserva eliminada' })
 })
-
-reservesRouter.get('/trip/:id', async (request, response) => {
-  const { id } = request.params
-
-  const trip = await Trip.findById(id)
-
-  if (!trip) {
-    return response.status(404).send({ error: 'Viaje no encontrado' })
-  }
-
-  const reserves = await Reserve.find({ trip: trip._id }).populate('placeStart').populate('placeEnd')
-
-  return response.status(200).send(reserves)
-})
-
 
 module.exports = reservesRouter

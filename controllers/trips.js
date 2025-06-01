@@ -153,16 +153,17 @@ tripsRouter.get('/next-trip', async (request, response) => {
   const user = request.user
   console.log('user', user)
 
-  const trips = await Trip.find({ driver: user._id })
+  const trips = await Trip.find({ driver: user._id, status: 'pendiente' })
 
   //si retorna null en frontend, busca en reservas donde es pasajero, saca estado de usuario
   if (trips.length === 0) {
     return response.status(404).json({ error: 'No trips found' })
   }
 
+  const today = new Date()
   let nextTrip = trips[0]
   trips.map(trip => {
-    if (trip.dateStart < nextTrip.dateStart) {
+    if (trip.dateStart < nextTrip.dateStart && trip.dateStart > today) {
       nextTrip = trip
     }
   })
