@@ -7,6 +7,7 @@ const Message = require('../models/message')
 const Reserve = require('../models/reserve')
 const Payment = require('../models/payment')
 const Opinion = require('../models/opinion')
+const geocode = require('../utils/geocode')
 /*
 function userHasVehicle(user, vehicleId) {
   if (!user || !user.vehicles || !vehicleId) return false
@@ -17,6 +18,7 @@ function validPlaces(placeStart, placeEnd) {
   return placeStart && placeEnd //verifico que existan
 }
 */
+
 tripsRouter.get('/', async (request, response) => {
   const trips = await Trip.find({ driver: request.user.id }).populate('driver').populate('vehicle').populate('placeStart').populate('placeEnd')
 
@@ -153,7 +155,7 @@ tripsRouter.get('/next-trip', async (request, response) => {
   const user = request.user
   console.log('user', user)
 
-  const trips = await Trip.find({ driver: user._id, status: 'pendiente' })
+  const trips = await Trip.find({ driver: user._id, status: 'pendiente' }).populate('placeStart').populate('placeEnd').populate('bookings')
 
   //si retorna null en frontend, busca en reservas donde es pasajero, saca estado de usuario
   if (trips.length === 0) {
@@ -352,6 +354,45 @@ tripsRouter.put('/review-driver/:id', async (request, response) => {
   await trip.save()
 
   response.json({ message: 'Review driver saved' })
+})
+
+tripsRouter.get('/route/:id', async (request, response) => {
+  const tripId = request.params.id
+  const trip = await Trip.findById(tripId).populate('placeStart').populate('placeEnd')
+
+  if (!trip) {
+    return response.status(404).json({ error: 'Trip not found' })
+  }
+
+  //para formar todas las rutas tengo que hayar los placeStart y placeEnd de cada reserva
+  const reserves = await Reserve.find({ trip: tripId })
+  const placesStart = []
+  placesStart.push(trip.placeStart)
+  const placesEnd = []
+  placesEnd.push(trip.placeEnd)
+  for (const reserve of reserves) {
+    placesStart.push(reserve.placeStart)
+    placesEnd.push(reserve.placeEnd)
+  }
+
+  let urlRuta = 'https://www.google.com/maps/dir/'
+  //get coordenadas de cada placesStart y end en un solo array de coordenadas
+  for (const place of placesStart) {
+    const coordinate = await geocode(place)
+    if (coordinate.lat && coordinate.lng) {
+      urlRuta += `${coordinate.lat},${coordinate.lng}/`
+    }
+  }
+  for (const place of placesEnd) {
+    const coordinate = await geocode(place)
+    if (coordinate.lat && coordinate.lng) {
+      urlRuta += `${coordinate.lat},${coordinate.lng}/`
+    }
+  }
+
+  console.log('urlRuta', urlRuta)
+
+  response.json({ urlRuta })
 })
 
 //obtener viaje con id en url

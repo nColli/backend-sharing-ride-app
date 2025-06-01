@@ -1,10 +1,10 @@
 const reservesRouter = require('express').Router()
 const Reserve = require('../models/reserve')
 const Trip = require('../models/trip')
-const axios = require('axios')
 const Vehicle = require('../models/vehicle')
 const User = require('../models/user')
 const Place = require('../models/place')
+const geocode = require('../utils/geocode')
 
 const fechaCerca = (trip, date) => {
   const tripDate = new Date(trip.dateStart)
@@ -12,20 +12,6 @@ const fechaCerca = (trip, date) => {
   const diffMs = Math.abs(tripDate - targetDate)
   const diffHours = diffMs / (1000 * 60 * 60)
   return diffHours <= 1
-}
-
-const geocodePlace = async (place) => {
-  const url = 'https://nominatim.openstreetmap.org/search?'
-  const urlQuery = `${url}street=${place.street}&city=${place.city}&state=${place.province}&country=Argentina`
-
-  const response = await axios.get(urlQuery)
-  const lat = response[0].lat
-  const lng = response[0].lon
-
-  return {
-    lat,
-    lng
-  }
 }
 
 const haversineDistance = (coord1, coord2) => {
@@ -48,10 +34,10 @@ const lugarCerca = async (trip, placeStart, placeEnd) => {
   // trip.placeStart, trip.placeEnd: { street, number, city, province }
   // placeStart, placeEnd: { street, number, city, province }
   try {
-    const tripStartCoords = await geocodePlace(trip.placeStart)
-    const tripEndCoords = await geocodePlace(trip.placeEnd)
-    const startCoords = await geocodePlace(placeStart)
-    const endCoords = await geocodePlace(placeEnd)
+    const tripStartCoords = await geocode(trip.placeStart)
+    const tripEndCoords = await geocode(trip.placeEnd)
+    const startCoords = await geocode(placeStart)
+    const endCoords = await geocode(placeEnd)
 
     const startDist = haversineDistance(tripStartCoords, startCoords)
     const endDist = haversineDistance(tripEndCoords, endCoords)
@@ -233,11 +219,6 @@ reservesRouter.patch('/confirm', async (request, response) => {
 reservesRouter.get('/', async (request, response) => {
   const user = request.user
 
-  //console.log('obt reservas pendientes')
-
-  //const reservas = await User.find({ _id: user._id }).populate('pendingReserves')
-  //const reserves = reservas[0].pendingReserves
-
   const reserves = await Reserve.find({ user: user.id }).populate('placeStart').populate('placeEnd')
 
   return response.status(200).send(reserves)
@@ -245,7 +226,7 @@ reservesRouter.get('/', async (request, response) => {
 
 reservesRouter.get('/next-reserve', async (request, response) => {
   const user = request.user
-  const reserves = await Reserve.find({ user: user.id })
+  const reserves = await Reserve.find({ user: user.id }).populate('placeStart').populate('placeEnd')
   if (reserves.length === 0) {
     return response.status(404).send({ error: 'No reserves found' })
   }
