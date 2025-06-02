@@ -94,6 +94,8 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
     province: placeStart.province
   })
 
+  const placeStartWithID = await placeStartSaved.save()
+
   const placeEndSaved = new Place({
     street: placeEnd.street,
     number: placeEnd.number,
@@ -101,10 +103,12 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
     province: placeEnd.province
   })
 
+  const placeEndWithID = await placeEndSaved.save()
+
   const newReserve = new Reserve({
     status: 'pendiente',
-    placeStart: placeStartSaved._id,
-    placeEnd: placeEndSaved._id,
+    placeStart: placeStartWithID._id,
+    placeEnd: placeEndWithID._id,
     dateStart: date,
     user: user.id,
     trip: trip._id
