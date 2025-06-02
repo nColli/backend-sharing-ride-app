@@ -45,27 +45,37 @@ tripsRouter.post('/', async (request, response) => {
 
   const payment = await Payment.findOne({})
   const feeNumber = Number(pricePerPassenger) * payment.fee
+  console.log('feeNumber', feeNumber)
   const fee = feeNumber.toString()
 
   //buscar si existe el lugar de de partida y llegada en la base de datos, si existe no crearlo, obtener el id y guardarlo en el viaje
-  let placeStartId = await Place.findOne({ name: placeStart.name })
-  let placeEndId = await Place.findOne({ name: placeEnd.name })
+  let placeStartId = null
+  let placeEndId = null
 
-  if (!placeStartId) {
+  if (placeStart.name !== '') {
+    placeStartId = await Place.findOne({ name: placeStart.name, user: user.id })
+  } else {
     const newPlaceStart = new Place({
-      ...placeStart
+      ...placeStart,
+      user: user.id
     })
     const newPlace = await newPlaceStart.save()
     placeStartId = newPlace._id
   }
 
-  if (!placeEndId) {
+  if (placeEnd.name !== '') {
+    placeEndId = await Place.findOne({ name: placeEnd.name, user: user.id })
+  } else {
     const newPlaceEnd = new Place({
-      ...placeEnd
+      ...placeEnd,
+      user: user.id
     })
     const newPlace = await newPlaceEnd.save()
     placeEndId = newPlace._id
   }
+
+  console.log('placeStartId', placeStartId)
+  console.log('placeEndId', placeEndId)
 
   //crear en loop o crear un solo trip
   if (!isRoutine) {
@@ -153,9 +163,10 @@ tripsRouter.post('/', async (request, response) => {
 //next-trip del conductor que lo solicita
 tripsRouter.get('/next-trip', async (request, response) => {
   const user = request.user
-  console.log('user', user)
 
-  const trips = await Trip.find({ driver: user._id, status: 'pendiente' }).populate('placeStart').populate('placeEnd').populate('bookings')
+  const trips = await Trip.find({ driver: user.id, status: 'pendiente' })
+    .populate('placeStart')
+    .populate('placeEnd')
 
   //si retorna null en frontend, busca en reservas donde es pasajero, saca estado de usuario
   if (trips.length === 0) {
@@ -172,6 +183,14 @@ tripsRouter.get('/next-trip', async (request, response) => {
   if (!nextTrip) {
     return response.status(404).json({ error: 'No next trip found' })
   }
+
+  const copyBookings = nextTrip.bookings
+  nextTrip.bookings = []
+  for (const reserveId of copyBookings) {
+    const reserve = await Reserve.findById(reserveId).populate('placeStart').populate('placeEnd')
+    nextTrip.bookings = nextTrip.bookings.concat(reserve)
+  }
+
   response.json(nextTrip)
 })
 
