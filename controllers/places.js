@@ -2,21 +2,21 @@
 const express = require('express')
 const router = express.Router()
 const Place = require('../models/place') // Adjust the path as needed
-const User = require('../models/user')
 
 router.post('/', async (req, res) => {
   try {
     //asumo que en body solo estan los datos necesarios para crear un lugar
+    const user = req.user
     console.log('req.body', req.body)
-    const newPlace = new Place(req.body)
+    const newPlace = new Place({
+      ...req.body,
+      user: user.id
+    })
 
     // Save the place to the database
     const savedPlace = await newPlace.save()
 
     console.log('saved place', savedPlace)
-
-    // Find the user by ID and update their regularPlaces array
-    const user = await User.findById(req.user.id)
 
     console.log('user', user)
 
