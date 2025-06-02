@@ -235,14 +235,24 @@ tripsRouter.post('/chat/:id', async (request, response) => {
 })
 
 
-
-//iniciar viaje con id en url
+//iniciar viaje proximo si es dentro de 1 hora - implementa luego
 tripsRouter.put('/start/:id', async (request, response) => {
-  //AGREGAR VERIFICACION QUE SOLO SE PUEDA INICIAR SI FALTA MEDIA HORA
+  //AGREGAR VERIFICACION QUE SOLO SE PUEDA INICIAR SI FALTA UNA HORA O MENOS
   //sin verificar para testing
 
   const tripId = request.params.id
   const trip = await Trip.findById(tripId)
+
+  const usersTo = []
+  for (const reserveId of trip.bookings) {
+    const reserve = await Reserve.findById(reserveId).populate('user')
+    const userTo = {
+      name: reserve.user.name,
+      surname: reserve.user.surname,
+      _id: reserve.user._id
+    }
+    usersTo.push(userTo)
+  }
 
   if (!trip) {
     return response.status(404).json({ error: 'Trip not found' })
@@ -263,7 +273,7 @@ tripsRouter.put('/start/:id', async (request, response) => {
   const alias = payment.alias
   const motivo = tripId //motivo transf conductor
 
-  response.json({ alias, motivo })
+  response.json({ alias, motivo, usersTo })
 })
 
 //terminar viaje, conductor debe ser el que envia la request, envia con una opinion por cada pasajero, array de opiniones, con cada una el id del usuario o la rseserva
