@@ -91,7 +91,8 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
     street: placeStart.street,
     number: placeStart.number,
     city: placeStart.city,
-    province: placeStart.province
+    province: placeStart.province,
+    user: user.id
   })
 
   const placeStartWithID = await placeStartSaved.save()
@@ -100,7 +101,8 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
     street: placeEnd.street,
     number: placeEnd.number,
     city: placeEnd.city,
-    province: placeEnd.province
+    province: placeEnd.province,
+    user: user.id
   })
 
   const placeEndWithID = await placeEndSaved.save()
