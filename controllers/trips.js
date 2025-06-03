@@ -290,7 +290,7 @@ tripsRouter.put('/start/:id', async (request, response) => {
 
   const payment = await Payment.findOne({})
   const alias = payment.alias
-  const motivo = tripId //motivo transf conductor
+  const motivo = tripId //motivo transf conductor - dni del conductor
 
   response.json({ alias, motivo, usersTo })
 })
@@ -346,10 +346,15 @@ tripsRouter.put('/finish/:id', async (request, response) => {
   response.json({ message: 'Trip finished' })
 })
 
-//terminar viaje, confirmacion de pago
-tripsRouter.put('/confirm-payment/:id', async (request, response) => {
-  const tripId = request.params.id
-  const trip = await Trip.findById(tripId)
+//terminar viaje, confirmacion de pago - por sistema externo administrador
+tripsRouter.put('/confirm-payment/:dni', async (request, response) => {
+  const user = request.user
+  if (!user.isAdmin) {
+    return response.status(401).json({ error: 'User must be admin' })
+  }
+  const dni = request.params.dni
+  const { monto } = request.body
+  const trip = await Trip.findOne({ driver: dni, tripFee: monto }) //primero con dni del conductor y monto
 
   if (!trip) {
     return response.status(404).json({ error: 'Trip not found' })
