@@ -400,6 +400,12 @@ tripsRouter.put('/review-driver/:id', async (request, response) => {
   trip.opinions = trip.opinions.concat(review._id)
   await trip.save()
 
+  //actualizar el estado de la reserva del usuario que mando la review a evaluada
+  const reserve = await Reserve.findOne({ user: user.id, trip: tripId })
+  reserve.status = 'evaluada'
+  await reserve.save()
+
+
   response.json({ message: 'Review driver saved' })
 })
 
