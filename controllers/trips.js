@@ -295,6 +295,13 @@ tripsRouter.put('/start/:id', async (request, response) => {
   response.json({ alias, motivo, usersTo })
 })
 
+const changeReserveToCompleted = async (reserveId) => {
+  //buscar reserva - marcarla con status "completada" y guardarla
+  const reserve = await Reserve.findById(reserveId)
+  reserve.status = 'completada'
+  await reserve.save()
+}
+
 //terminar viaje, conductor debe ser el que envia la request, envia con una opinion por cada pasajero, array de opiniones, con cada una el id del usuario o la rseserva
 tripsRouter.put('/finish/:id', async (request, response) => {
   const tripId = request.params.id
@@ -313,21 +320,28 @@ tripsRouter.put('/finish/:id', async (request, response) => {
   }
 
   //crear opinion por cada pasajero que haya ingresado
-  for (const opinionUser of opinions) {
-    const opinion = new Opinion({
-      user: trip.driver,
-      userTo: opinionUser.userTo,
-      trip: tripId,
-      opinion: opinionUser.opinion
-    })
-    await opinion.save()
-    //guardar en el viaje
-    trip.opinions = trip.opinions.concat(opinion._id)
-    await trip.save()
+  if (opinions) {
+    for (const opinionUser of opinions) {
+      const opinion = new Opinion({
+        user: trip.driver,
+        userTo: opinionUser.userTo,
+        trip: tripId,
+        opinion: opinionUser.opinion
+      })
+      await opinion.save()
+      //guardar en el viaje
+      trip.opinions = trip.opinions.concat(opinion._id)
+      await trip.save()
+    }
   }
 
   trip.status = 'pago pendiente'
   await trip.save()
+
+  //marcar reservas como completada tambien para logica de reservas pendientes y dar opinion
+  trip.bookings.map(async (reserve) => {
+    await changeReserveToCompleted(reserve) //id de la reserva
+  })
 
   response.json({ message: 'Trip finished' })
 })

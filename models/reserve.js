@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const reserveSchema = new mongoose.Schema({
   status: {
-    type: String, //pendiente - confirmada
+    type: String, //pendiente - confirmada - completada - evaluada (luego de dar opinion), si tiene reservas completadas se muestra en la pantalla iniciar primer boton de evaluar conductor
     require: true
   },
   dateStart: {

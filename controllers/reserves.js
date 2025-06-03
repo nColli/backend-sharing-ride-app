@@ -222,7 +222,16 @@ reservesRouter.patch('/confirm', async (request, response) => {
   return response.status(200).send({ message: 'reservas confirmadas' })
 })
 
+//retorna solo las que tienen estado confirmada
 reservesRouter.get('/', async (request, response) => {
+  const user = request.user
+
+  const reserves = await Reserve.find({ user: user.id, status: 'confirmada' }).populate('placeStart').populate('placeEnd')
+
+  return response.status(200).send(reserves)
+})
+
+reservesRouter.get('/all', async (request, response) => {
   const user = request.user
 
   const reserves = await Reserve.find({ user: user.id }).populate('placeStart').populate('placeEnd')
@@ -230,9 +239,10 @@ reservesRouter.get('/', async (request, response) => {
   return response.status(200).send(reserves)
 })
 
+
 reservesRouter.get('/next-reserve', async (request, response) => {
   const user = request.user
-  const reserves = await Reserve.find({ user: user.id }).populate('placeStart').populate('placeEnd')
+  const reserves = await Reserve.find({ user: user.id, status: 'confirmada' }).populate('placeStart').populate('placeEnd')
   if (reserves.length === 0) {
     return response.status(404).send({ error: 'No reserves found' })
   }
