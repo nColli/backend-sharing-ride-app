@@ -366,31 +366,35 @@ tripsRouter.put('/confirm-payment/:id', async (request, response) => {
 })
 
 tripsRouter.put('/review-driver/:id', async (request, response) => {
+  const user = request.user
   const tripId = request.params.id
   const trip = await Trip.findById(tripId)
-  const { reviewDriver } = request.body
+  const { userTo, opinion } = request.body
   //estructura review:
-  // { user, opinion }
+  // { userTo, opinion }
 
   if (!trip) {
     return response.status(404).json({ error: 'Trip not found' })
   }
 
-  if (trip.status !== 'completado' || trip.status !== 'pago pendiente') {
+  if (trip.status !== 'completado' && trip.status !== 'pago pendiente') {
     return response.status(400).json({ error: 'Trip not completed' })
   }
 
   // si el usuario no es pasajero, no puede dejar una review
-  const passenger = trip.bookings.find(booking => booking.user.toString() === reviewDriver.user.toString())
+  //const passenger = trip.bookings.find(booking => booking.user.toString() === reviewDriver.user.toString())
+
+  const passenger = await Reserve.findOne({ user: user.id, trip: tripId })
+
   if (!passenger) {
     return response.status(400).json({ error: 'User is not a passenger' })
   }
 
   const review = new Opinion({
-    user: reviewDriver.user,
-    userTo: trip.driver,
+    user: user.id,
+    userTo,
     trip: tripId,
-    opinion: reviewDriver.opinion
+    opinion
   })
   await review.save()
   trip.opinions = trip.opinions.concat(review._id)

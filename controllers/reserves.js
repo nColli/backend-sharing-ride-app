@@ -273,6 +273,38 @@ reservesRouter.get('/trip/:id', async (request, response) => {
   return response.status(200).send(reserves)
 })
 
+//retorna si tiene reservas pendientes de evaluación al conductor, solo un flag para mostrar en el frontend botón
+reservesRouter.get('/pending-review', async (request, response) => {
+  const user = request.user
+
+  const reserve = await Reserve.findOne({ user: user.id, status: 'completada' }) //reserva de un viaje terminado pero sin reseña al conductor
+
+  if (reserve) {
+    return response.status(200).send({ pendiente: true })
+  }
+
+  return response.status(200).send({ pendiente: false })
+})
+
+reservesRouter.get('/review-driver', async (request, response) => {
+  const user = request.user
+
+  //tengo que retornar para mostrar a quien le hago la review y en que viaje
+  const reserve = await Reserve.findOne({ user: user.id, status: 'completada' }).populate('trip').populate('placeStart').populate('placeEnd')
+
+  console.log('reserveReview', reserve)
+
+  const driverTrip = await User.findById(reserve.trip.driver)
+
+  const driver = {
+    name: driverTrip.name,
+    surname: driverTrip.surname,
+    id: driverTrip.id
+  }
+
+  return response.status(200).send({ reserve, driver })
+})
+
 // obtener reserva con id en url - IMP: NO POPULAR con trip
 reservesRouter.get('/:id', async (request, response) => {
   const { id } = request.params
@@ -311,5 +343,7 @@ reservesRouter.delete('/:id', async (request, response) => {
 
   return response.status(200).send({ message: 'Reserva eliminada' })
 })
+
+
 
 module.exports = reservesRouter
