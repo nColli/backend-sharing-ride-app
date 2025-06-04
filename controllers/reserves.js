@@ -156,9 +156,13 @@ const createRoutine = async (bodyRequest, user) => {
 
       if (reserve === false) {
         allCreate = false
+      } else {
+        savedReserves.push(reserve)
       }
     }
   }
+
+  console.log('savedReserves en routine', savedReserves)
 
   return {
     savedReserves,
@@ -180,18 +184,20 @@ reservesRouter.post('/', async (request, response) => {
   console.log('es rutina:', isRoutine)
 
   if (isRoutine) {
-    const { reserves, allCreate } = await createRoutine(request.body, user)
+    const { savedReserves, allCreate } = await createRoutine(request.body, user)
 
-    if (reserves === false) {
+    console.log('savedReserves en routine', savedReserves)
+
+    if (savedReserves.length === 0) {
       return response.status(401).send({ error: 'No ha sido posible crear ninguna reserva' })
     }
 
     if (allCreate === false) {
-      return response.status(200).send({ reserves, message: 'No se han creado todas las reservas, pero si algunas' })
+      return response.status(200).send({ savedReserves, message: 'No se han creado todas las reservas, pero si algunas' })
     }
 
 
-    return response.status(200).send({ reserves })
+    return response.status(200).send({ savedReserves })
 
   } else {
     //crear una sola reserva
