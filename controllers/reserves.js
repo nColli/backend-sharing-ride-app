@@ -129,9 +129,9 @@ const findCreateReserve = async (placeStart, placeEnd, date, user) => {
   return reserve
 }
 
-const createRoutine = async (bodyRequest) => {
+const createRoutine = async (bodyRequest, user) => {
   //crear rutina
-  const { placeStart, placeEnd, dateStart, dateEnd, days, user } = bodyRequest
+  const { placeStart, placeEnd, dateStart, dateEnd, days } = bodyRequest
 
   const start = new Date(dateStart)
   const end = new Date(dateEnd)
@@ -180,7 +180,7 @@ reservesRouter.post('/', async (request, response) => {
   console.log('es rutina:', isRoutine)
 
   if (isRoutine) {
-    const { reserves, allCreate } = await createRoutine(request.body)
+    const { reserves, allCreate } = await createRoutine(request.body, user)
 
     if (reserves === false) {
       return response.status(401).send({ error: 'No ha sido posible crear ninguna reserva' })
