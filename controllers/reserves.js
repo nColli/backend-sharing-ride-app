@@ -240,7 +240,7 @@ reservesRouter.get('/', async (request, response) => {
 reservesRouter.get('/all', async (request, response) => {
   const user = request.user
 
-  const reserves = await Reserve.find({ user: user.id }).populate('placeStart').populate('placeEnd')
+  const reserves = await Reserve.find({ user: user.id }).populate('placeStart').populate('placeEnd').populate('trip')
 
   return response.status(200).send(reserves)
 })
