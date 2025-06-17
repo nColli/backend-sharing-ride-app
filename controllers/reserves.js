@@ -252,16 +252,26 @@ reservesRouter.get('/next-reserve', async (request, response) => {
   if (reserves.length === 0) {
     return response.status(404).send({ error: 'No reserves found' })
   }
-  let nextReserve = reserves[0]
+
   const today = new Date()
-  reserves.map(reserve => {
-    if (reserve.dateStart < nextReserve.dateStart && reserve.dateStart > today) {
+
+  const futureReserves = reserves.filter(reserve => new Date(reserve.dateStart) > today)
+
+  if (futureReserves.length === 0) {
+    return response.status(404).send({ error: 'No upcoming reserves found' })
+  }
+
+  let nextReserve = futureReserves[0]
+  futureReserves.forEach(reserve => {
+    if (new Date(reserve.dateStart) < new Date(nextReserve.dateStart)) {
       nextReserve = reserve
     }
   })
+
   if (!nextReserve) {
     return response.status(404).send({ error: 'No next reserve found' })
   }
+
   return response.status(200).send(nextReserve)
 })
 

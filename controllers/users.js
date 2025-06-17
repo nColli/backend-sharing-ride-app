@@ -47,18 +47,6 @@ usersRouter.post('/', upload.fields([
   const saltRounds = 10
   const passwordHash = await bcrypt.hash(password, saltRounds)
 
-  const placeHome = new Place({
-    name: 'Casa',
-    street,
-    number,
-    city,
-    province
-  })
-
-  const savedPlaceHome = await placeHome.save()
-
-  console.log('home', savedPlaceHome)
-
   const user = new User({
     dni,
     email,
@@ -70,6 +58,20 @@ usersRouter.post('/', upload.fields([
   })
 
   const savedUser = await user.save()
+
+  const placeHome = new Place({
+    name: 'Casa',
+    street,
+    number,
+    city,
+    province,
+    user: savedUser._id
+  })
+
+  const savedPlaceHome = await placeHome.save()
+
+  console.log('home', savedPlaceHome)
+
   savedUser.regularPlaces = savedUser.regularPlaces.concat(savedPlaceHome._id)
   const lastSavedUser = await savedUser.save() //reescribir con la casa agregada
 

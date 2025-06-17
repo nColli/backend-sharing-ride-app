@@ -174,9 +174,16 @@ tripsRouter.get('/next-trip', async (request, response) => {
   }
 
   const today = new Date()
-  let nextTrip = trips[0]
-  trips.map(trip => {
-    if (trip.dateStart < nextTrip.dateStart && trip.dateStart > today) {
+
+  const futureTrips = trips.filter(trip => new Date(trip.dateStart) > today)
+
+  if (futureTrips.length === 0) {
+    return response.status(404).json({ error: 'No upcoming trips found' })
+  }
+
+  let nextTrip = futureTrips[0]
+  futureTrips.forEach(trip => {
+    if (new Date(trip.dateStart) < new Date(nextTrip.dateStart)) {
       nextTrip = trip
     }
   })
@@ -260,7 +267,7 @@ tripsRouter.put('/start/:id', async (request, response) => {
   //sin verificar para testing
 
   const tripId = request.params.id
-  const trip = await Trip.findById(tripId)
+  const trip = await Trip.findById(tripId).populate('driver')
 
   const usersTo = []
   for (const reserveId of trip.bookings) {
@@ -290,7 +297,7 @@ tripsRouter.put('/start/:id', async (request, response) => {
 
   const payment = await Payment.findOne({})
   const alias = payment.alias
-  const motivo = tripId //motivo transf conductor - dni del conductor
+  const motivo = trip.driver.dni //dni del conductor
 
   response.json({ alias, motivo, usersTo })
 })
